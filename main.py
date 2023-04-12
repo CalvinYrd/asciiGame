@@ -1,4 +1,4 @@
-import pynput, asyncio, time, os, colorama, sys
+import pynput, asyncio, time, os, colorama, sys, random
 
 if (os.name == "nt"):
 	clear = lambda: os.system("cls")
@@ -32,18 +32,24 @@ def getGame():
 	w = w.replace("p", colorama.Back.WHITE+colorama.Fore.BLACK+"p"+colorama.Back.RESET+colorama.Fore.RESET)
 	return w
 
-def playerIsValid():
-	return not getGame().startswith("player_")
+def playerIsInvalid():
+	return getGame().startswith("player_")
 
 def movePlayer(direction):
 	global player
-	"""
-	changer player dir + changer x ou y selon la dir
-	test playerisvalid
-	si invalide reset dir et x ou y
-	"""
 
-FPS = 5
+	if (direction in ("t","r","b","l")):
+		playerSave = player.copy()
+		player["direction"] = direction
+
+		if (direction == "t"): player["y"] -= 1
+		elif (direction == "b"): player["y"] += 1
+		elif (direction == "r"): player["x"] += 1
+		elif (direction == "l"): player["x"] -= 1
+
+		if (playerIsInvalid()): player = playerSave
+
+FPS = 15
 player = {
 	"x": 47,
 	"y": 3,
@@ -81,12 +87,12 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 """
 clear()
 
-if (not playerIsValid()):
+if (playerIsInvalid()):
 	print("Les coordonnées de départ sont incorrectes ("+getGame()+")")
 else:
 	while True:
 		clear()
 		print(getGame())
-		print(player["direction"])
+		movePlayer(random.choice(("t","r","b","l")))
 		time.sleep(1 / FPS)
 
