@@ -15,16 +15,15 @@ def getGame():
 		w[player["y"]] = list(w[player["y"]])
 
 		if (w[player["y"]][player["x"]] == "x"):
-			print("Le joueur ne peut pas être placé dans un mur !")
-			sys.exit(0)
+			raise ValueError
 
 		w[player["y"]][player["x"]] = "p"
-
 		w[player["y"]] = "".join(w[player["y"]])
 
 	except IndexError:
-		print("coordonnées du joueur incorrect !")
-		sys.exit(0)
+		return "player_off_world"
+	except ValueError:
+		return "player_in_wall"
 
 	w = "\n".join(w)
 
@@ -33,12 +32,24 @@ def getGame():
 	w = w.replace("p", colorama.Back.WHITE+colorama.Fore.BLACK+"p"+colorama.Back.RESET+colorama.Fore.RESET)
 	return w
 
-FPS = 2
+def playerIsValid():
+	return not getGame().startswith("player_")
+
+def movePlayer(direction):
+	global player
+	"""
+	changer player dir + changer x ou y selon la dir
+	test playerisvalid
+	si invalide reset dir et x ou y
+	"""
+
+FPS = 5
 player = {
 	"x": 47,
 	"y": 3,
 	"lives": 3,
-	"score": 0
+	"score": 0,
+	"direction": None
 }
 world = """\
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -68,9 +79,14 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 """
+clear()
 
-while True:
-	clear()
-	print(getGame())
-	time.sleep(1 / FPS)
+if (not playerIsValid()):
+	print("Les coordonnées de départ sont incorrectes ("+getGame()+")")
+else:
+	while True:
+		clear()
+		print(getGame())
+		print(player["direction"])
+		time.sleep(1 / FPS)
 
