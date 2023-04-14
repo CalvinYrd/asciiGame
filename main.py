@@ -1,4 +1,4 @@
-import pynput, asyncio, time, os, colorama, sys, random
+import msvcrt, asyncio, time, os, colorama
 
 if (os.name == "nt"):
 	clear = lambda: os.system("cls")
@@ -38,16 +38,23 @@ def playerIsInvalid():
 def movePlayer(direction):
 	global player
 
-	if (direction in ("t","r","b","l")):
+	if (direction in ("z","d","s","q")):
 		playerSave = player.copy()
 		player["direction"] = direction
 
-		if (direction == "t"): player["y"] -= 1
-		elif (direction == "b"): player["y"] += 1
-		elif (direction == "r"): player["x"] += 1
-		elif (direction == "l"): player["x"] -= 1
+		if (direction == "z"): player["y"] -= 1
+		elif (direction == "s"): player["y"] += 1
+		elif (direction == "d"): player["x"] += 1
+		elif (direction == "q"): player["x"] -= 1
 
 		if (playerIsInvalid()): player = playerSave
+
+async def setDirection():
+	global player
+	direction = msvcrt.getch().decode()
+
+	if (direction in ("z","d","s","q")):
+		player["direction"] = direction
 
 FPS = 15
 player = {
@@ -91,8 +98,9 @@ if (playerIsInvalid()):
 	print("Les coordonnées de départ sont incorrectes ("+getGame()+")")
 else:
 	while True:
+		asyncio.run(setDirection())
 		clear()
 		print(getGame())
-		movePlayer(random.choice(("t","r","b","l")))
+		movePlayer(player["direction"])
 		time.sleep(1 / FPS)
 
