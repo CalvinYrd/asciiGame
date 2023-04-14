@@ -1,4 +1,4 @@
-import msvcrt, asyncio, time, os, colorama
+import msvcrt, asyncio, time, os, colorama, random
 
 if (os.name == "nt"):
 	clear = lambda: os.system("cls")
@@ -8,8 +8,7 @@ else:
 def getGame():
 	global world, player
 
-	w = world
-	w = w.split("\n")
+	w = world.copy()
 
 	try:
 		w[player["y"]] = list(w[player["y"]])
@@ -29,14 +28,19 @@ def getGame():
 
 	w = w.replace("x", colorama.Back.BLUE+" "+colorama.Back.RESET)
 	w = w.replace(",", colorama.Back.WHITE+" "+colorama.Back.RESET)
-	w = w.replace("p", colorama.Back.WHITE+colorama.Fore.BLACK+"p"+colorama.Back.RESET+colorama.Fore.RESET)
+	w = w.replace(".", colorama.Back.YELLOW+" "+colorama.Back.RESET)
+	w = w.replace("p", colorama.Back.GREEN+colorama.Fore.BLACK+"p"+colorama.Back.RESET+colorama.Fore.RESET)
+
+	details = "SCORE : "+str(player["score"])+" VIES : "+str(player["lives"])
+	# details = colorama.Back.BLUE+details+colorama.Back.RESET
+	w = w.replace("$DETAILS$", details)
 	return w
 
 def playerIsInvalid():
-	return getGame().startswith("player_")
+	return (getGame() in ("player_off_world","player_in_wall"))
 
 def movePlayer(direction):
-	global player
+	global player, world
 
 	if (direction in ("z","d","s","q")):
 		playerSave = player.copy()
@@ -44,19 +48,39 @@ def movePlayer(direction):
 
 		if (direction == "z"): player["y"] -= 1
 		elif (direction == "s"): player["y"] += 1
-		elif (direction == "d"): player["x"] += 1
-		elif (direction == "q"): player["x"] -= 1
+		elif (direction == "d"): player["x"] += 2
+		elif (direction == "q"): player["x"] -= 2
+		line = list(world[player["y"]])
 
-		if (playerIsInvalid()): player = playerSave
+		if (line[player["x"]] == ","):
+			player["score"] += random.randint(5, 15)
+
+		if (playerIsInvalid()):
+			player = playerSave
+		else:
+			line[player["x"]] = "."
+			if (line[player["x"]-1] == ","): line[player["x"]-1] = "."
+			if (line[player["x"]+1] == ","): line[player["x"]+1] = "."
+			line = "".join(line)
+			world[player["y"]] = line
 
 async def setDirection():
 	global player
-	direction = msvcrt.getch().decode()
 
-	if (direction in ("z","d","s","q")):
-		player["direction"] = direction
+	if msvcrt.kbhit():
+		direction = msvcrt.getch()
 
-FPS = 15
+		if (direction in (b"z",b"d",b"s",b"q")):
+			player["direction"] = direction.decode()
+
+def gameIsUndone():
+	global world
+	w = world.copy()
+	w = "\n".join(w)
+	res = ("," in w)
+	return res
+
+FPS = 30
 player = {
 	"x": 47,
 	"y": 3,
@@ -90,17 +114,23 @@ xxxxxxxxxxxxxxxx,,xxxxxxxxxxxx,,xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,,xxxxxxxxxxxx,,x
 xxxxxxxxxxxxxxxx,,,,,,,,,,,,,,,,xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,,,,,,,,,,,,,,,,xxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$DETAILS$
 """
+world = world.split("\n")
 clear()
 
-if (playerIsInvalid()):
-	print("Les coordonnées de départ sont incorrectes ("+getGame()+")")
-else:
-	while True:
-		asyncio.run(setDirection())
+async def main():
+	if (playerIsInvalid()):
+		print("Les coordonnées de départ sont incorrectes ("+getGame()+")")
+	else:
+		while gameIsUndone():
+			await asyncio.create_task(setDirection())
+			clear()
+			print(getGame())
+			movePlayer(player["direction"])
+			time.sleep(1 / FPS)
+
 		clear()
 		print(getGame())
-		movePlayer(player["direction"])
-		time.sleep(1 / FPS)
 
+asyncio.run(main())
