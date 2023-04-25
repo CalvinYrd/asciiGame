@@ -1,9 +1,20 @@
-import msvcrt, asyncio, time, os, colorama, random
+from msvcrt import getch as msvcrt_getch
+from msvcrt import kbhit as msvcrt_kbhit
 
-if (os.name == "nt"):
-	clear = lambda: os.system("cls")
+from os import system as os_system
+from os import name as os_name
+
+from asyncio import create_task
+from asyncio import run
+
+from colorama import Fore, Back
+from random import randint
+from time import sleep
+
+if (os_name == "nt"):
+	clear = lambda: os_system("cls")
 else:
-	clear = lambda: os.system("clear")
+	clear = lambda: os_system("clear")
 
 def getGame():
 	global world, player
@@ -26,13 +37,13 @@ def getGame():
 
 	w = "\n".join(w)
 
-	w = w.replace("x", colorama.Back.BLUE+" "+colorama.Back.RESET)
-	w = w.replace(",", colorama.Back.WHITE+" "+colorama.Back.RESET)
-	w = w.replace(".", colorama.Back.YELLOW+" "+colorama.Back.RESET)
-	w = w.replace("p", colorama.Back.GREEN+colorama.Fore.BLACK+"p"+colorama.Back.RESET+colorama.Fore.RESET)
+	w = w.replace("x", Back.BLUE+" "+Back.RESET)
+	w = w.replace(",", Back.WHITE+" "+Back.RESET)
+	w = w.replace(".", Back.YELLOW+" "+Back.RESET)
+	w = w.replace("p", Back.GREEN+Fore.BLACK+"p"+Back.RESET+Fore.RESET)
 
 	details = "SCORE : "+str(player["score"])+" VIES : "+str(player["lives"])
-	# details = colorama.Back.BLUE+details+colorama.Back.RESET
+	# details = Back.BLUE+details+Back.RESET
 	w = w.replace("$DETAILS$", details)
 	return w
 
@@ -53,7 +64,7 @@ def movePlayer(direction):
 		line = list(world[player["y"]])
 
 		if (line[player["x"]] == ","):
-			player["score"] += random.randint(5, 15)
+			player["score"] += randint(5, 15)
 
 		if (playerIsInvalid()):
 			player = playerSave
@@ -67,8 +78,8 @@ def movePlayer(direction):
 async def setDirection():
 	global player
 
-	if msvcrt.kbhit():
-		direction = msvcrt.getch()
+	if msvcrt_kbhit():
+		direction = msvcrt_getch()
 
 		if (direction in (b"z",b"d",b"s",b"q")):
 			player["direction"] = direction.decode()
@@ -124,13 +135,13 @@ async def main():
 		print("Les coordonnées de départ sont incorrectes ("+getGame()+")")
 	else:
 		while gameIsUndone():
-			await asyncio.create_task(setDirection())
+			await create_task(setDirection())
 			clear()
 			print(getGame())
 			movePlayer(player["direction"])
-			time.sleep(1 / FPS)
+			sleep(1 / FPS)
 
 		clear()
 		print(getGame())
 
-asyncio.run(main())
+run(main())
